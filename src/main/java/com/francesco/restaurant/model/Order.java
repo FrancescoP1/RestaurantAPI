@@ -17,13 +17,14 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Table(name = "ORDERS")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
     @GenericGenerator(strategy = "native", name = "native")
     private int orderId;
     @ManyToOne(targetEntity = RestaurantTable.class, fetch = FetchType.EAGER)
-    @JoinColumn(name = "TABLE_ID", referencedColumnName = "tableId", nullable = false)
+    @JoinColumn(name = "TABLE_ID", referencedColumnName = "tableId", nullable = true)
     private RestaurantTable orderTable;
     private Timestamp orderDate;
 

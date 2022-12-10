@@ -14,7 +14,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-
+@Table(name = "MENU_ITEMS")
 public class MenuItem {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "native")
