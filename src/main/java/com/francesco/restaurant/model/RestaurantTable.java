@@ -1,5 +1,6 @@
 package com.francesco.restaurant.model;
 
+import com.francesco.restaurant.constants.TableConstants;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
