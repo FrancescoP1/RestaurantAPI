@@ -1,5 +1,6 @@
 package com.francesco.restaurant.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.francesco.restaurant.constants.TableConstants;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,7 @@ public class RestaurantTable {
     private int capacity;
     private String status;
 
+    @JsonIgnore
     @OneToMany(targetEntity = Order.class, cascade = CascadeType.PERSIST,
                 fetch = FetchType.EAGER, mappedBy = "orderTable")
     private Set<Order> orders;
