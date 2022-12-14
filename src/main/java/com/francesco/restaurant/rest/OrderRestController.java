@@ -28,7 +28,8 @@ public class OrderRestController {
         httpHeaders.add("order-found", "true");
         requestResponse.setMessage("Order id " + orderId + " successfully found!");
         requestResponse.setResponseObject(orderToFind);
-        return new ResponseEntity<>(requestResponse, httpHeaders, HttpStatus.ACCEPTED);
+        requestResponse.setStatusCode(200);
+        return new ResponseEntity<>(requestResponse, httpHeaders, HttpStatus.OK);
 
     }
 
@@ -53,6 +54,7 @@ public class OrderRestController {
         Response requestResponse = new Response();
         httpHeaders.add("order-created", "true");
         requestResponse.setMessage("Order successfully created!");
+        requestResponse.setStatusCode(200);
         requestResponse.setResponseObject(orderToCreate);
         return new ResponseEntity<>(requestResponse, httpHeaders, HttpStatus.OK);
     }

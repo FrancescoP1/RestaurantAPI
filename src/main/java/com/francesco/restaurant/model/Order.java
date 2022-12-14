@@ -10,6 +10,7 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.ManyToAny;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,7 +29,7 @@ public class Order {
     @ManyToOne(targetEntity = RestaurantTable.class, fetch = FetchType.EAGER)
     @JoinColumn(name = "TABLE_ID", referencedColumnName = "tableId", nullable = true)
     private RestaurantTable orderTable;
-    private Timestamp orderDate;
+    private Timestamp orderDate = Timestamp.valueOf(LocalDateTime.now());
 
     /*@ManyToMany(fetch = FetchType.EAGER,
                 mappedBy = "orders", cascade = CascadeType.PERSIST)

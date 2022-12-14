@@ -34,7 +34,7 @@ public class RestaurantTableService {
             throw new ObjectNotFoundException(response);
         } else if (!Objects.equals(tableToValidate.get().getStatus(), TableConstants.AVAILABLE)) {
             response.setMessage("Table id: " + tableId + " is already RESERVED!");
-            response.setStatusCode(404);
+            response.setStatusCode(400);
             throw new BusinessException(response);
         }
         return tableToValidate.get();
