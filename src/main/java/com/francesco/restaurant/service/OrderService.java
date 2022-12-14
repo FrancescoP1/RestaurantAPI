@@ -1,6 +1,7 @@
 package com.francesco.restaurant.service;
 
 import com.francesco.restaurant.constants.TableConstants;
+import com.francesco.restaurant.exception.BusinessException;
 import com.francesco.restaurant.exception.ObjectNotFoundException;
 import com.francesco.restaurant.model.MenuItem;
 import com.francesco.restaurant.model.Order;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,12 +32,21 @@ public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
 
+    /*
     @Autowired
     private MenuItemRepository menuItemRepository;
 
     @Autowired
     private TableRepository tableRepository;
+     */
+
+    @Autowired
+    private MenuItemService itemService;
+
+    @Autowired
+    private RestaurantTableService tableService;
     public Order deleteOrder(int orderId) throws ObjectNotFoundException{
+        /*
         Optional<Order> orderToDelete = orderRepository.findById(orderId);
         if(orderToDelete.isPresent()) {
             if(orderToDelete.get().getOrderId() > 0) {
@@ -48,10 +59,23 @@ public class OrderService {
                 throw new ObjectNotFoundException(response);
             }
         }
-        return null;
+         */
+        Order orderToDelete = this.validateOrder(orderId);
+        RestaurantTable orderTable = orderToDelete.getOrderTable();
+        orderTable.getOrders().remove(orderToDelete);
+        tableService.getTableRepository().save(orderTable);
+        for(MenuItem item : orderToDelete.getOrderItems()) {
+            item.getOrders().remove(orderToDelete);
+            itemService.getMenuItemRepository().save(item);
+        }
+        orderToDelete.setOrderItems(null);
+        orderRepository.save(orderToDelete);
+        orderRepository.delete(orderToDelete);
+        return orderToDelete;
     }
 
     public Order findOrderById(int orderId) throws ObjectNotFoundException{
+        /*
         Optional<Order> orderToFind = orderRepository.findById(orderId);
         if(orderToFind.isPresent() && orderToFind.get().getOrderId() > 0) {
             return orderToFind.get();
@@ -61,17 +85,48 @@ public class OrderService {
             response.setStatusCode(404);
             throw new ObjectNotFoundException(response);
         }
+         */
+        return this.validateOrder(orderId);
     }
 
-    public Order createOrder(Order order) {
+    public Order createOrder(Order order) throws ObjectNotFoundException, BusinessException {
+        Response response = new Response();
         if(order != null && order.getOrderTable() != null) {
-            order.getOrderTable().setStatus(TableConstants.RESERVED);
-            return orderRepository.save(order);
+            RestaurantTable restaurantTable = tableService.validateTable(order.getOrderTable().getTableId());
+            Set<MenuItem> orderItems = new HashSet<>();
+            if(order.getOrderItems().size() > 0) {
+                for(MenuItem item : order.getOrderItems()) {
+                    orderItems.add(itemService.validateItem(item.getItemId()));
+                }
+            } else {
+                response.setStatusCode(400);
+                response.setMessage("Invalid order items");
+                throw new BusinessException(response);
+            }
+            Order orderToReturn = new Order();
+            orderToReturn.setOrderItems(orderItems);
+            orderToReturn.setOrderTable(restaurantTable);
+            return orderToReturn;
         }
-        return null;
+        response.setStatusCode(400);
+        response.setMessage("Invalid request format!");
+        throw new BusinessException(response);
     }
 
     public Response removeOrderItem(int orderId, int itemId) throws ObjectNotFoundException{
+        Order orderToModify = this.validateOrder(orderId);
+        MenuItem itemToRemove = itemService.validateItem(itemId);
+        Response response = new Response();
+        if(!orderToModify.getOrderItems().remove(itemToRemove)) {
+            response.setStatusCode(404);
+            response.setMessage("Item id: " + itemId + " is not part of order id: " + orderId);
+            return response;
+        }
+        orderRepository.save(orderToModify);
+        response.setMessage("Item id: " + itemId + " successfully removed from order id: " + orderId);
+        response.setStatusCode(200);
+        return response;
+        /*
         Optional<Order> orderToModify = orderRepository.findById(orderId);
         Optional<MenuItem> itemToRemove = menuItemRepository.findById(itemId);
         Response response = new Response();
@@ -97,9 +152,19 @@ public class OrderService {
             throw new ObjectNotFoundException(response);
         }
         return response;
+         */
     }
 
     public Response addItemToOrder(int orderId, int itemId) throws ObjectNotFoundException{
+        Order orderToModify = this.validateOrder(orderId);
+        MenuItem itemToAdd = itemService.validateItem(itemId);
+        orderToModify.getOrderItems().add(itemToAdd);
+        orderRepository.save(orderToModify);
+        Response response = new Response();
+        response.setStatusCode(200);
+        response.setMessage("Item id: " + itemId + " successfully added to order id: " + orderId);
+        return response;
+        /*
         Optional<Order> orderToModify = orderRepository.findById(orderId);
         Optional<MenuItem> itemToAdd = menuItemRepository.findById(itemId);
         Response response = new Response();
@@ -118,27 +183,18 @@ public class OrderService {
             throw new ObjectNotFoundException(response);
         }
         return response;
+         */
     }
 
-    public Response isTableValid(RestaurantTable restaurantTable) {
-        Response response = new Response();
-        response.setStatusCode(404);
-        if(restaurantTable != null) {
-            Optional<RestaurantTable> tableToCheck = tableRepository.findById(restaurantTable.getTableId());
-            if(tableToCheck.isPresent() && tableToCheck.get().getTableId() > 0){
-                if(tableToCheck.get().getStatus().equals(TableConstants.AVAILABLE)) {
-                    response.setMessage("Table is available");
-                    response.setStatusCode(200);
-                } else {
-                    response.setMessage("Table is already reserved!");
-                    response.setStatusCode(400);
-                }
-            } else {
-                response.setMessage("Invalid Table");
-            }
-        } else {
-            response.setMessage("No table present in order!");
+    public Order validateOrder(int orderId) throws ObjectNotFoundException {
+        Optional<Order> orderToValidate = orderRepository.findById(orderId);
+        if(!(orderToValidate.isPresent() && orderToValidate.get().getOrderId() > 0)) {
+            Response response = new Response();
+            response.setStatusCode(404);
+            response.setMessage("Order id: " + orderId + " not found!");
+            throw new ObjectNotFoundException(response);
         }
-        return response;
+        return orderToValidate.get();
     }
+
 }

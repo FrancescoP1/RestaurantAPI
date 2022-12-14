@@ -44,23 +44,17 @@ public class OrderRestController {
     }
 
     @PostMapping(path = "createNewOrder")
-    ResponseEntity<Response> createNewOrder(@Valid @RequestBody Order order, BindingResult errors) throws BusinessException {
+    ResponseEntity<Response> createNewOrder(@Valid @RequestBody Order order, BindingResult errors) throws BusinessException, ObjectNotFoundException {
         if(errors.hasErrors()) {
             throw new BusinessException(new Response("Table is reserved!", 400, null));
         }
         Order orderToCreate = orderService.createOrder(order);
         HttpHeaders httpHeaders = new HttpHeaders();
         Response requestResponse = new Response();
-        if(orderToCreate != null && orderToCreate.getOrderId() > 0) {
-            httpHeaders.add("order-created", "true");
-            requestResponse.setMessage("Order successfully created!");
-            requestResponse.setResponseObject(orderToCreate);
-            return new ResponseEntity<>(requestResponse, httpHeaders, HttpStatus.OK);
-        } else {
-            httpHeaders.add("order-created", "false");
-            requestResponse.setMessage("Order was not created, try again!");
-            return new ResponseEntity<>(requestResponse, httpHeaders, HttpStatus.CONFLICT);
-        }
+        httpHeaders.add("order-created", "true");
+        requestResponse.setMessage("Order successfully created!");
+        requestResponse.setResponseObject(orderToCreate);
+        return new ResponseEntity<>(requestResponse, httpHeaders, HttpStatus.OK);
     }
 
     @PutMapping(path = "removeItemFromOrder")
